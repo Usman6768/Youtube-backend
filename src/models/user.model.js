@@ -51,6 +51,7 @@ const userSchema = new Schema(
     {timestamps: true}
 )
 
+// Middleware for hashing the password before saving
 userSchema.pre("save", async function (next){
     if(!this.isModified("password")) return next();
 
@@ -58,11 +59,13 @@ userSchema.pre("save", async function (next){
     next()
 })
 
+// Method to check if the password is correct
 userSchema.methods.isPasswordCorrect = async function (password){
     return await bcrypt.compare(password, this.password)
 }   
 
-userSchema.models.generateAccessToken() = function(){
+// Method to generate an access token
+userSchema.methods.generateAccessToken = function(){
     return jwt.sign(
         {
             _id: this._id,
@@ -76,10 +79,13 @@ userSchema.models.generateAccessToken() = function(){
         }
     )
 }
-userSchema.models.generateRefreshToken() = function(){
+
+// Method to generate a refresh token
+userSchema.methods.generateRefreshToken = function(){
     return jwt.sign(
         {
             _id: this._id,
+            
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
