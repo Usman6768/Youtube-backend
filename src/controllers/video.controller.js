@@ -70,8 +70,48 @@ const getAllVideos = asyncHandler(async (req, res) => {
         },
     ];
 
-    // end of pipeline
+     // end of pipeline
 
+    if( sortBy && sortType ){
+        let sortStage = {
+            $sort: {
+                [sortBy] : sortType.toLowerCase() === 'desc' ? -1 : 1 
+            }
+        }
+
+    pipeline.push(sortStage)
+    }
+
+    else {
+        // Default sorting by createdAt in ascending order if sortBy and sortType are not provided
+        pipeline.push({
+            $sort: {
+                createdAt: 1
+            }
+        });
+    }
+
+
+    // add pagination stages
+    let skipStage = {
+        $skip: ( page - 1 ) * limit
+    }
+
+    let limitStage = {
+        $limit: limit
+    }
+
+    pipeline.push(skipStage,limitStage)
+
+    const video = await Video.aggregate(pipeline)
+
+    if(!video?.length){
+        throw new ApiError(400, "No videos found")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Videos fetched Successfully"))
 
 })
 
