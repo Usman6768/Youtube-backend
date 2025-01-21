@@ -110,4 +110,43 @@ const getUserChannelSubscribers = asyncHandler(async (req,res) => {
 
 })
 
-export {toggleSubscription, getUserChannelSubscribers}
+const getSubscribedChannels = asyncHandler(async (req,res) => {
+    const SubscribersNumber = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "ChannelSubTo"
+            }
+        },
+        {
+            $addFields: {
+                ChannelSubTo: {
+                    $size: "$ChannelSubTo"
+                }
+            }
+        },
+        {
+            $project: {
+                ChannelSubTo: 1
+            }
+        },
+    ])
+
+    if(!SubscribersNumber?.length){
+        throw new ApiError(400, "Channel not found")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, SubscribersNumber, "Channel Subscribed number fetched successfully"))
+})
+
+
+export {toggleSubscription, getUserChannelSubscribers, getSubscribedChannels}
